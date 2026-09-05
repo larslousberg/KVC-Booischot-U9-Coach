@@ -11,6 +11,8 @@ function score(items){let v=Object.fromEntries(P.map(x=>[x,0]));items.forEach(x=
 async function refresh(){
 	let ts=(await all('trainings')).sort((a,b)=>b.date.localeCompare(a.date));
 	let fs=await all('feedback');
+	const feedbackFor=t=>fs.filter(f=>f.trainingId===t.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+	const primaryFor=q=>q.find(f=>f.primary)?.primary||'Geen hoofdfocus gekozen';
 	// Bepaal huidige hoofdfocus: meest recent expliciet gekozen `primary`
 	let recentWithPrimary = fs.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).find(f=>f.primary);
 	if(recentWithPrimary){
@@ -23,7 +25,9 @@ async function refresh(){
 		$('#priorityText').textContent = 'Er is geen recente expliciete hoofdfocus gekozen.';
 	}
 
-	$('#trainingList').innerHTML = ts.length?ts.map(t=>`<article class="training-item"><span class="tag">Concept</span><h3>${esc(t.title)}</h3><p>${date(t.date)} · ${esc(t.priority)}</p><p>${fs.filter(f=>f.trainingId===t.id).length} feedback-item(s)</p></article>`).join(''):'<p>Nog geen training bewaard.</p>';
+	$('#trainingList').innerHTML = ts.length?ts.map(t=>{let q=feedbackFor(t);return `<article class="training-item"><span class="tag">Concept</span><h3>${esc(t.title)}</h3><p>${date(t.date)} · ${esc(t.priority)}</p><p>${t.attendees==null?'Aanwezigheid niet geregistreerd':`${t.attendees} aanwezige speler(s)`} · ${q.length} feedback-item(s)</p><p><strong>Hoofdfocus:</strong> ${esc(primaryFor(q))}</p><div class="training-actions"><button class="secondary" type="button" data-open-training="${esc(t.id)}">Openen</button><button class="danger" type="button" data-delete-training="${esc(t.id)}">Verwijderen</button></div></article>`}).join(''):'<p>Nog geen training bewaard.</p>';
+	$$('[data-open-training]').forEach(x=>x.onclick=()=>showDossier(x.dataset.openTraining));
+	$$('[data-delete-training]').forEach(x=>x.onclick=()=>deleteTraining(x.dataset.deleteTraining));
 
 	let form=$('#feedbackForm'),gate=$('#feedbackGate'),sel=$('#feedbackTraining');
 	if(!ts.length){
@@ -34,7 +38,28 @@ async function refresh(){
 
 	// Historiek: markeer feedbacks met een expliciete hoofdfocus
 	$('#historyList').innerHTML = ts.length?ts.map(t=>{let q=fs.filter(f=>f.trainingId===t.id);return `<article class="training-item"><h3>${esc(t.title)}</h3><p>${date(t.date)} · ${esc(t.priority)}</p>${q.length?`<p><strong>${q.length} feedback-item(s)</strong></p>`+q.map(f=>{let primaryHtml = f.primary?`<p><strong>Hoofdfocus gekozen: ${esc(f.primary)}</strong></p>`:'';return `${primaryHtml}<p>✓ Goed: ${esc(f.good.join(', ')||'—')}<br>! Moeilijk: ${esc(f.difficult.join(', ')||'—')}<br>↺ Terug: ${esc(f.repeat.join(', ')||'—')}</p>`}).join(''):'<p>Nog geen feedback bij deze training.</p>'}</article>`}).join(''):'<p>Nog geen trainingsdossiers.</p>'}
-function view(x){$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===x));$$('.view').forEach(v=>v.classList.toggle('active',v.id===x));refresh()}
+async function showDossier(trainingId){
+	let t=await one('trainings',trainingId);if(!t)return;
+	let q=(await all('feedback')).filter(f=>f.trainingId===trainingId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+	$('#trainingDossier').innerHTML=`<button class="secondary dossier-back" type="button" data-back-to-training>← Terug naar trainingen</button><div class="section-heading compact"><p class="eyebrow">TRAININGSDOSSIER</p><h3>${esc(t.title)}</h3><p>${date(t.date)} · ${esc(t.priority)}</p></div><p><strong>Aanwezige spelers:</strong> ${t.attendees==null?'Niet geregistreerd':t.attendees}</p><p><strong>Notitie:</strong> ${esc(t.notes||'—')}</p><h4>Gekoppelde feedback (${q.length})</h4>${q.length?q.map(f=>`<div class="feedback-entry"><p><strong>Wat ging goed:</strong> ${esc(f.good.join(', ')||'—')}</p><p><strong>Wat ging moeilijk:</strong> ${esc(f.difficult.join(', ')||'—')}</p><p><strong>Wat moet terugkomen:</strong> ${esc(f.repeat.join(', ')||'—')}</p><p><strong>Hoofdfocus:</strong> ${esc(f.primary||'Geen hoofdfocus gekozen')}</p></div>`).join(''):'<p>Nog geen feedback bij deze training.</p>'}`;
+	$('#trainingOverview').classList.add('hidden');
+	$('#trainingDossier').classList.remove('hidden');
+	$('[data-back-to-training]').onclick=showTrainingOverview;
+}
+function showTrainingOverview(){
+	$('#trainingDossier').classList.add('hidden');
+	$('#trainingOverview').classList.remove('hidden');
+}
+async function deleteTraining(trainingId){
+	let t=await one('trainings',trainingId);if(!t)return;
+	if(!window.confirm(`Training "${t.title}" en alle gekoppelde feedback verwijderen?`))return;
+	let tx=db.transaction(['trainings','feedback'],'readwrite'),feedbackStore=tx.objectStore('feedback'),trainingStore=tx.objectStore('trainings');
+	let linked=await req(feedbackStore.index('trainingId').getAll(trainingId));
+	linked.forEach(f=>feedbackStore.delete(f.id));trainingStore.delete(trainingId);
+	await new Promise((ok,no)=>{tx.oncomplete=ok;tx.onerror=()=>no(tx.error);tx.onabort=()=>no(tx.error||Error('Verwijderen afgebroken.'))});
+	$('#trainingDossier').classList.add('hidden');showTrainingOverview();status(true,'Opslag in orde');await refresh();
+}
+function view(x){if(x==='training')showTrainingOverview();$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===x));$$('.view').forEach(v=>v.classList.toggle('active',v.id===x));refresh()}
 async function init(){
 	P.forEach(p=>$('#trainingPriority').insertAdjacentHTML('beforeend',`<option>${esc(p)}</option>`));
 	// populate checkbox lists
@@ -50,7 +75,7 @@ async function init(){
 
 	$('#trainingForm [name=date]').value=new Date().toISOString().slice(0,10);
 	try{if(!window.indexedDB)throw Error();db=await open();await put('trainings',{id:'healthcheck',date:'2099-01-01',title:'__healthcheck__',priority:P[0]});let tx=db.transaction('trainings','readwrite');tx.objectStore('trainings').delete('healthcheck');status(true,'Opslag in orde');await refresh()}catch(e){console.error(e);status(false,'Opslag niet beschikbaar');$$('form button,input,select').forEach(x=>x.disabled=true)}$$('.nav').forEach(x=>x.onclick=()=>view(x.dataset.view));$$('[data-go]').forEach(x=>x.onclick=()=>view(x.dataset.go));
-$('#trainingForm').onsubmit=async e=>{e.preventDefault();let s=$('#trainingStatus'),f=new FormData(e.target);try{s.textContent='Bewaren…';await put('trainings',{id:id(),type:'training',date:f.get('date'),title:f.get('title').trim(),priority:f.get('priority'),notes:f.get('notes').trim(),createdAt:new Date().toISOString()});s.textContent='✓ Training bewaard en gecontroleerd.';e.target.reset();$('#trainingForm [name=date]').value=new Date().toISOString().slice(0,10);await refresh()}catch(x){s.textContent='⚠ Training kon niet bevestigd worden.';s.className='form-status error'}};
+$('#trainingForm').onsubmit=async e=>{e.preventDefault();let s=$('#trainingStatus'),f=new FormData(e.target);try{s.textContent='Bewaren…';await put('trainings',{id:id(),type:'training',date:f.get('date'),title:f.get('title').trim(),priority:f.get('priority'),attendees:Number(f.get('attendees')),notes:f.get('notes').trim(),createdAt:new Date().toISOString()});s.textContent='✓ Training bewaard en gecontroleerd.';e.target.reset();$('#trainingForm [name=date]').value=new Date().toISOString().slice(0,10);await refresh()}catch(x){s.textContent='⚠ Training kon niet bevestigd worden.';s.className='form-status error'}};
 $('#feedbackForm').onsubmit=async e=>{e.preventDefault();let s=$('#feedbackStatus'),trainingId=$('#feedbackTraining').value;try{if(!await one('trainings',trainingId))throw Error('De gekozen training bestaat niet.');let primary = $('#feedbackPrimary')?$('#feedbackPrimary').value:null; if(primary==='') primary=null;let f={id:id(),type:'feedback',parentType:'training',parentId:trainingId,trainingId,good:picked('good'),difficult:picked('difficult'),repeat:picked('repeat'),primary:primary,createdAt:new Date().toISOString()};if(!f.good.length&&!f.difficult.length&&!f.repeat.length)throw Error('Kies minstens één feedbackpunt.');s.textContent='Bewaren…';await put('feedback',f);if(!await one('feedback',f.id))throw Error('Feedback niet teruggevonden.');s.textContent='✓ Feedback opgeslagen bij de gekozen training en gecontroleerd.';$$('#feedbackForm input').forEach(x=>x.checked=false);if($('#feedbackPrimary'))$('#feedbackPrimary').value='';await live();await refresh()}catch(x){s.textContent='⚠ '+x.message;s.className='form-status error'}};$('#feedbackForm').onchange=live}
 async function live(){
 	let sel = $('#feedbackPrimary')?$('#feedbackPrimary').value:'';
