@@ -8,7 +8,11 @@ const PRIORITY_TAXONOMY=[
  {id:'fysiek-coordinatie',label:'Fysiek / coördinatie',priorities:['Reactie / startsnelheid','Versnellen / vertragen','Starten / stoppen','Draaien / richtingsverandering','Algemene lichaamscoördinatie','Oog-voetcoördinatie']}
 ];
 const P=PRIORITY_TAXONOMY.flatMap(category=>category.priorities);
-const LEGACY_PRIORITY_VALUES=['Kijken vóór spelen','Omschakelen'];
+const LEGACY_PRIORITY_COMPATIBILITY={
+ 'Kijken vóór spelen':{mappedPriority:'Kijken vóór spelen / oriëntatie'},
+ 'Omschakelen':{mappedPriority:null}
+};
+const LEGACY_PRIORITY_VALUES=Object.keys(LEGACY_PRIORITY_COMPATIBILITY);
 const KNOWN_PRIORITY_VALUES=[...P,...LEGACY_PRIORITY_VALUES];
 const priorityCategory=id=>PRIORITY_TAXONOMY.find(category=>category.id===id);
 const priorityOptionGroups=()=>PRIORITY_TAXONOMY.map(category=>`<optgroup label="${esc(category.label)}">${category.priorities.map(priority=>`<option value="${esc(priority)}">${esc(priority)}</option>`).join('')}</optgroup>`).join('');
@@ -26,6 +30,57 @@ const EXERCISES=[
  {id:'2v2-u9',title:'2v2 met omschakeling',source:'KVC oefenfundering',sourceType:'intern-referentie',primaryObjective:'1v1 oplossen / man uitschakelen',secondaryObjectives:['Omschakelen','Ruimte herkennen / vrijlopen'],ageGroups:['U9'],playersMin:4,playersMax:4,idealPlayers:4,minPlayers:4,maxPlayers:4,expandable:true,expandableWithNeutralPlayers:false,rotationPossible:true,substitutePossible:true,parallelGroupPossible:true,physicalLoad:'Hoog',loadProfile:{explicitSource:{physical:{field:'physicalLoad',value:'Hoog'}},derivedKvcEstimate:{technical:'Gemiddeld',tactical:'Hoog'}},trainerRequirement:{minimum:null,ideal:null,source:'Niet gespecificeerd in bestaande oefengegevens'},abSuitability:{progressionAAvailable:true,progressionBAvailable:true},feedbackPriorities:['1v1 oplossen / man uitschakelen','Omschakelen','Ruimte herkennen / vrijlopen'],organizationNotes:'Vier spelers starten 2v2. Bij balwinst gaat het team direct richting het andere doel; extra spelers roteren na een intensieve beurt.',scalabilityStatus:'ORGANIZATION_ADJUSTMENT',durationMin:15,exerciseType:'Spelvorm',fieldSize:'18 x 25 m',materials:['2 kleine doelen','4 kegels','1 bal'],difficulty:'Gemiddeld',organization:'Twee aanvallers spelen tegen twee verdedigers. Balbezit leidt tot balverlies of balwinst, waarna de nieuwe aanval onmiddellijk naar het andere doel gaat.',coachingPoints:['Eerste actie vooruit','Maak de ruimte breed','Reageer direct na balverlies'],kvcPrinciples:['1v1 oplossen / man uitschakelen','Omschakelen'],matchTransfer:'Herkenbaar duelgedrag in kleine aantallen.',progressionA:'Voeg alleen een neutrale kaatser toe als extra aanspeelpunt nodig is.',progressionB:'Beperk de balbezittende ploeg tot drie contacten.',regression:'Laat verdedigers starten op halve snelheid.',progression:'Na balwinst direct naar het andere doel.',adaptableFields:['players','durationMin','fieldSize'],diagram:{field:{width:100,height:60},goals:[{type:'small',x:2,y:24,w:4,h:12},{type:'small',x:94,y:24,w:4,h:12}],players:[{id:'a1',x:25,y:22,team:'A'},{id:'a2',x:25,y:38,team:'A'},{id:'d1',x:75,y:22,team:'B'},{id:'d2',x:75,y:38,team:'B'}],keepers:[],opponents:['d1','d2'],neutralPlayers:[],balls:[{id:'b1',x:50,y:30}],cones:[{x:15,y:15},{x:15,y:45},{x:85,y:15},{x:85,y:45}],markers:[],zones:[],labels:[{text:'2v2 omschakeling',x:50,y:6}],movements:[{type:'dribble',from:{x:25,y:22},to:{x:48,y:18}},{type:'run',from:{x:25,y:38},to:{x:48,y:42}},{type:'shot',from:{x:48,y:18},to:{x:96,y:30}},{type:'ballPath',from:{x:96,y:30},to:{x:4,y:30}}]}},
  {id:'game-5v5-u9',title:'Wedstrijdvorm 5v5',source:'KVC oefenfundering',sourceType:'intern-referentie',primaryObjective:'Vrije speler vinden / vrijspelen',secondaryObjectives:['Omschakelen','Ruimte herkennen / vrijlopen'],ageGroups:['U9'],playersMin:10,playersMax:10,idealPlayers:10,minPlayers:10,maxPlayers:10,expandable:false,expandableWithNeutralPlayers:false,rotationPossible:true,substitutePossible:true,parallelGroupPossible:true,physicalLoad:'Hoog',loadProfile:{explicitSource:{physical:{field:'physicalLoad',value:'Hoog'}},derivedKvcEstimate:{technical:'Gemiddeld',tactical:'Hoog'}},trainerRequirement:{minimum:null,ideal:null,source:'Niet gespecificeerd in bestaande oefengegevens'},abSuitability:{progressionAAvailable:true,progressionBAvailable:true},feedbackPriorities:['Vrije speler vinden / vrijspelen','Omschakelen','Ruimte herkennen / vrijlopen'],organizationNotes:'Exact twee teams van vijf: één keeper en vier veldspelers per team. Extra spelers kunnen per rotatie of in een parallelle vorm deelnemen.',scalabilityStatus:'GROUP_OR_ROTATION',durationMin:20,exerciseType:'Wedstrijdvorm',fieldSize:'30 x 40 m',materials:['2 grote doelen','6 kegels','1 bal'],difficulty:'Toegepast',organization:'Keeper plus vier veldspelers tegen keeper plus vier veldspelers.',coachingPoints:['Maak het veld groot bij balbezit','Kijk voor de pass vooruit','Schakel samen om'],kvcPrinciples:['Vrije speler vinden / vrijspelen','Omschakelen'],matchTransfer:'Volledige spelcontext met twee teams van vijf.',progressionA:'Scoren telt dubbel na een pass door een vrije speler.',progressionB:'Start elke herneming bij de keeper.',regression:'Speel zonder de centrale zone als extra beperking.',progression:'Laat de coach de herneming bij de keeper variëren.',adaptableFields:['players','durationMin','fieldSize'],diagram:{field:{width:100,height:60},goals:[{type:'large',x:0,y:23,w:5,h:14},{type:'large',x:95,y:23,w:5,h:14}],players:[{id:'ak',x:8,y:30,team:'A',role:'keeper'},{id:'a1',x:25,y:15,team:'A'},{id:'a2',x:30,y:30,team:'A'},{id:'a3',x:25,y:45,team:'A'},{id:'a4',x:43,y:30,team:'A'},{id:'bk',x:92,y:30,team:'B',role:'keeper'},{id:'b1',x:75,y:15,team:'B'},{id:'b2',x:70,y:30,team:'B'},{id:'b3',x:75,y:45,team:'B'},{id:'b4',x:57,y:30,team:'B'}],keepers:['ak','bk'],opponents:['b1','b2','b3','b4','bk'],neutralPlayers:[],balls:[{id:'b1',x:43,y:30}],cones:[{x:15,y:8},{x:15,y:52},{x:85,y:8},{x:85,y:52},{x:50,y:8},{x:50,y:52}],markers:[],zones:[],labels:[{text:'5v5',x:50,y:6},{text:'Keeper + 4',x:18,y:57},{text:'Keeper + 4',x:82,y:57}],movements:[{type:'pass',from:{x:43,y:30},to:{x:30,y:30}},{type:'run',from:{x:25,y:15},to:{x:43,y:18}},{type:'cross',from:{x:30,y:30},to:{x:75,y:15}},{type:'shot',from:{x:43,y:30},to:{x:95,y:30}}]}}
 ];
+function priorityCategoryForValue(priority){return PRIORITY_TAXONOMY.find(category=>category.priorities.includes(priority))||null}
+function normalizeExercise(exercise){
+ let priorities=Array.isArray(exercise.feedbackPriorities)?exercise.feedbackPriorities:[];
+ let concretePriorities=priorities.map(value=>{let category=priorityCategoryForValue(value);return category?{value,categoryId:category.id,categoryLabel:category.label}:null}).filter(Boolean);
+ let legacyPriorities=priorities.filter(value=>LEGACY_PRIORITY_VALUES.includes(value)).map(value=>({value,mappedPriority:LEGACY_PRIORITY_COMPATIBILITY[value].mappedPriority}));
+ let unknownPriorities=priorities.filter(value=>!priorityCategoryForValue(value)&&!LEGACY_PRIORITY_VALUES.includes(value));
+ let explicitPhysical=exercise.loadProfile?.explicitSource?.physical;
+ let derivedLoad=exercise.loadProfile?.derivedKvcEstimate;
+ return {
+  schemaVersion:1,
+  id:exercise.id??null,
+  title:exercise.title??null,
+  provenance:{source:{name:exercise.source??null,type:exercise.sourceType??null,reference:null},adaptation:{status:'unspecified',notes:null}},
+  taxonomy:{concretePriorities,legacyPriorities,unknownPriorities},
+  audience:{ageGroups:Array.isArray(exercise.ageGroups)?[...exercise.ageGroups]:[]},
+  format:{type:exercise.exerciseType??null,difficulty:exercise.difficulty??null},
+  players:{minimum:exercise.minPlayers??exercise.playersMin??null,ideal:exercise.idealPlayers??null,maximum:exercise.maxPlayers??exercise.playersMax??null,scaling:{expandable:exercise.expandable??null,expandableWithNeutralPlayers:exercise.expandableWithNeutralPlayers??null,rotationPossible:exercise.rotationPossible??null,substitutePossible:exercise.substitutePossible??null,parallelGroupPossible:exercise.parallelGroupPossible??null,status:exercise.scalabilityStatus??null}},
+  duration:{minimumMinutes:exercise.durationMin??null,idealMinutes:null,maximumMinutes:null},
+  space:{description:exercise.fieldSize??null,dimensions:null},
+  equipment:Array.isArray(exercise.materials)?[...exercise.materials]:[],
+  load:{physical:{value:exercise.physicalLoad??null,provenance:explicitPhysical?'explicitSource':'unspecified'},technical:{value:derivedLoad?.technical??null,provenance:derivedLoad?.technical?'derivedKvcEstimate':'unspecified'},tactical:{value:derivedLoad?.tactical??null,provenance:derivedLoad?.tactical?'derivedKvcEstimate':'unspecified'}},
+  trainers:{minimum:exercise.trainerRequirement?.minimum??null,ideal:exercise.trainerRequirement?.ideal??null,provenance:'unspecified',sourceNote:exercise.trainerRequirement?.source??null},
+  setup:{organization:exercise.organization??null,notes:exercise.organizationNotes??null},
+  coaching:{points:Array.isArray(exercise.coachingPoints)?[...exercise.coachingPoints]:[],kvcPrinciples:Array.isArray(exercise.kvcPrinciples)?[...exercise.kvcPrinciples]:[],matchTransfer:exercise.matchTransfer??null},
+  adaptations:{progressionA:exercise.progressionA??null,progressionB:exercise.progressionB??null,regression:exercise.regression??null,adaptableFields:Array.isArray(exercise.adaptableFields)?[...exercise.adaptableFields]:[]},
+  diagram:exercise.diagram??null
+ };
+}
+function validateExercise(exercise){
+ let normalized=normalizeExercise(exercise),errors=[],warnings=[],missingSourceFields=[];
+ if(typeof normalized.id!=='string'||!normalized.id.trim())errors.push('id ontbreekt of is ongeldig.');
+ if(typeof normalized.title!=='string'||!normalized.title.trim())errors.push('title ontbreekt of is ongeldig.');
+ let {minimum,ideal,maximum}=normalized.players;
+ if([minimum,ideal,maximum].every(value=>value!==null)&&!(minimum<=ideal&&ideal<=maximum))errors.push('Spelersaantallen moeten minimum ≤ ideaal ≤ maximum zijn.');
+ if(typeof normalized.duration.minimumMinutes!=='number'||normalized.duration.minimumMinutes<=0)errors.push('Duur moet een positief aantal minuten zijn.');
+ normalized.taxonomy.unknownPriorities.forEach(value=>errors.push(`Onbekende feedbackprioriteit: ${value}.`));
+ if(!exercise.loadProfile?.explicitSource?.physical||exercise.loadProfile.explicitSource.physical.field!=='physicalLoad'||exercise.loadProfile.explicitSource.physical.value!==exercise.physicalLoad)errors.push('Fysieke belasting moet als expliciete bronwaarde herkenbaar blijven.');
+ if(!exercise.loadProfile?.derivedKvcEstimate?.technical||!exercise.loadProfile?.derivedKvcEstimate?.tactical)errors.push('Technische en tactische belasting moeten als afgeleide KVC-inschatting herkenbaar blijven.');
+ if(!normalized.diagram||typeof normalized.diagram!=='object')errors.push('Diagramdata ontbreekt.');
+ if(!Array.isArray(exercise.materials)||exercise.materials.some(material=>typeof material!=='string'||!material.trim()))errors.push('Materiaaldata moet een leesbare lijst zijn.');
+ normalized.taxonomy.legacyPriorities.forEach(legacy=>warnings.push(legacy.mappedPriority?`Legacywaarde ${legacy.value} is enkel compatibel gekoppeld aan ${legacy.mappedPriority}.`:`Legacywaarde ${legacy.value} blijft bewust zonder automatische inhoudelijke koppeling.`));
+ if(normalized.provenance.source.reference===null)missingSourceFields.push('provenance.source.reference');
+ if(normalized.provenance.adaptation.status==='unspecified')missingSourceFields.push('provenance.adaptation');
+ if(normalized.duration.idealMinutes===null)missingSourceFields.push('duration.idealMinutes');
+ if(normalized.duration.maximumMinutes===null)missingSourceFields.push('duration.maximumMinutes');
+ if(normalized.space.dimensions===null)missingSourceFields.push('space.dimensions');
+ if(normalized.trainers.minimum===null)missingSourceFields.push('trainers.minimum');
+ if(normalized.trainers.ideal===null)missingSourceFields.push('trainers.ideal');
+ return {id:normalized.id,valid:errors.length===0,errors,warnings,legacyValues:normalized.taxonomy.legacyPriorities,missingSourceFields,normalized};
+}
+function validateExercises(exercises=EXERCISES){return exercises.map(validateExercise)}
 function getScalabilityStatus(exercise,availablePlayers){
  if(availablePlayers===exercise.idealPlayers)return 'DIRECT';
  if(availablePlayers>=exercise.minPlayers&&availablePlayers<=exercise.maxPlayers)return 'DIRECT';
